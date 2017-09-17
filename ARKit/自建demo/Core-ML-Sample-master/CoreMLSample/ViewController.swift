@@ -25,13 +25,18 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        //初始化Vision
         setupVision()
+        
+        //初始化视频图像
         let spec = VideoSpec(fps: 5, size: CGSize(width: 299, height: 299))
         videoCapture = VideoCapture(cameraType: .back,
                                     preferredSpec: spec,
                                     previewContainer: previewView.layer)
         
+        //获取图像缓冲区
         videoCapture.imageBufferHandler = {[unowned self] (imageBuffer) in
+            //获取图像数据后选择使用vision还是coreML
             if self.visionSwitch.isOn {
                 // Use Vision
                 self.handleImageBufferWithVision(imageBuffer: imageBuffer)
@@ -43,6 +48,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
         }
     }
     
+    //MARK: - 使用CoreML 识别
     func handleImageBufferWithCoreML(imageBuffer: CMSampleBuffer) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(imageBuffer) else {
             return
@@ -60,6 +66,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
         }
     }
     
+    //MARK: - 使用Vision识别图像数据
     func handleImageBufferWithVision(imageBuffer: CMSampleBuffer) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(imageBuffer) else {
             return
@@ -71,6 +78,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
             requestOptions = [.cameraIntrinsics:cameraIntrinsicData]
         }
         
+        //处理图像请求
         let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: CGImagePropertyOrientation(rawValue: UInt32(self.exifOrientationFromDeviceOrientation))!, options: requestOptions)
         do {
             try imageRequestHandler.perform(self.requests)
@@ -79,11 +87,15 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
         }
     }
     
+    //MARK: - 初始化Vision
     func setupVision() {
+        //加载机器学习模型inceptionv3，从一组1000个类别（如树木，动物，食物，车辆，人物等）中检测出图像中的主要物体。
         guard let visionModel = try? VNCoreMLModel(for: inceptionv3model.model) else {
             fatalError("can't load Vision ML model")
         }
+        //使用机器学习模型创建CoreML请求
         let classificationRequest = VNCoreMLRequest(model: visionModel) { (request: VNRequest, error: Error?) in
+            //获取回调信息
             guard let observations = request.results else {
                 print("no results:\(error!)")
                 return
@@ -93,12 +105,16 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate {
                 .flatMap({ $0 as? VNClassificationObservation })
                 .filter({ $0.confidence > 0.2 })
                 .map({ "\($0.identifier) \($0.confidence)" })
+            
             DispatchQueue.main.async {
                 self.predictLabel.text = classifications.joined(separator: "\n")
             }
         }
+        
+        //设置图像属性选项
         classificationRequest.imageCropAndScaleOption = VNImageCropAndScaleOption.centerCrop
         
+        //持有请求
         self.requests = [classificationRequest]
     }
     

@@ -17,7 +17,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         //添加图片
-        let zylImage = UIImage.init(named: "zllt.png")
+        let zylImage = UIImage.init(named: "FullSizeRender4.jpg")
         let imgSize = zylImage?.size
         let zylImageView = UIImageView.init(image: zylImage)
         

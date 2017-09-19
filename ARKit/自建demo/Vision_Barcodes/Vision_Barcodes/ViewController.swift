@@ -17,7 +17,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         //加载图片
-        let image = UIImage.init(named: "IMG_0122")
+        let image = UIImage.init(named: "IMG_0120")
         
         let ciImage = CIImage.init(image: image!)
         
@@ -54,7 +54,7 @@ class ViewController: UIViewController {
         }
         
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
